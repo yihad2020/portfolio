@@ -1,538 +1,940 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" integrity="sha512-UJfAaOlIRtdR+0P6C3KUoTDAxVTuy3lnSXLyLKlHYJlcSU8Juge/mjeaxDNMlw9LgeIotgz5FP8eUQPhX1q10A==" crossorigin="anonymous" referrerpolicy="no-referrer" /> 
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">     
-	<link rel="stylesheet" type="text/css" href="style.css">
-	<title> Yihad Salek</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOID_ARCHITECT // Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --terminal-green: #00ff41;
+            --deep-space: #050508;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(0, 243, 255, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
+
+        body {
+            background: var(--deep-space);
+            color: #fff;
+            font-family: 'Share Tech Mono', monospace;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* --- SCI-FI OVERLAY EFFECTS --- */
+        body::before {
+            content: " ";
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 1000;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            opacity: 0.1; /* More subtle */
+        }
+
+        .scanline {
+            width: 100%; height: 100px;
+            z-index: 1001;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(0, 243, 255, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
+            opacity: 0.08; /* More subtle */
+            position: fixed;
+            bottom: 100%;
+            animation: scanline 10s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -100px; }
+        }
+
+        canvas#scene {
+            position: fixed;
+            top: 0; left: 0;
+            z-index: -1;
+        }
+
+        /* --- DECORATIVE HUD ELEMENTS --- */
+        .hud-corner {
+            position: fixed;
+            width: 40px; height: 40px;
+            border: 2px solid var(--neon-blue);
+            z-index: 999;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        .top-left { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+        .bottom-right { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+
+        .floating-data {
+            position: absolute;
+            font-size: 10px;
+            color: var(--neon-blue);
+            opacity: 0.4;
+            animation: drift var(--duration) infinite linear;
+            pointer-events: none;
+            text-shadow: 0 0 5px var(--neon-blue);
+        }
+
+        @keyframes drift {
+            0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0.4; }
+            50% { transform: translateY(-50vh) translateX(20vw) rotate(180deg); opacity: 0.8; }
+            100% { transform: translateY(-100vh) translateX(0) rotate(360deg); opacity: 0; }
+        }
+
+        /* --- CONTENT SECTIONS --- */
+        section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5vw;
+            position: relative;
+            z-index: 10; /* Ensure content is above background */
+        }
+
+        .hero-title {
+            text-align: center;
+            z-index: 10;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8vw;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px var(--neon-blue), 0 0 40px rgba(0,243,255,0.5);
+            margin: 0;
+            line-height: 0.9;
+        }
+
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5vw;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .status-bar {
+            background: rgba(0, 243, 255, 0.1);
+            padding: 5px 20px;
+            border-left: 4px solid var(--neon-blue);
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--terminal-green);
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 50px;
+            max-width: 900px;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.1);
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+        }
+
+        .glass-panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 50px var(--neon-blue);
+        }
+
+        .glass-panel::after {
+            content: "ID: " attr(data-id); /* Dynamic ID */
+            position: absolute;
+            top: -10px; right: 20px;
+            background: var(--neon-blue);
+            color: #000;
+            font-size: 10px;
+            padding: 2px 10px;
+            font-family: 'Orbitron';
+        }
+
+        /* --- ABOUT ME SECTION SPECIFIC --- */
+        .about-content {
+            display: flex;
+            gap: 50px;
+            align-items: center;
+        }
+
+        .profile-hologram {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid var(--neon-pink);
+            box-shadow: 0 0 20px var(--neon-pink), inset 0 0 10px var(--neon-pink);
+            position: relative;
+            flex-shrink: 0;
+            filter: grayscale(80%) brightness(1.2); /* Sci-fi filter */
+            transition: all 0.5s ease;
+        }
+
+        .profile-hologram img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .profile-hologram::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(45deg, rgba(0,243,255,0.2) 0%, transparent 50%, rgba(255,0,255,0.2) 100%);
+            animation: scanEffect 3s infinite linear;
+        }
+
+        @keyframes scanEffect {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* --- SKILLS HEX --- */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 20px;
+        }
+
+        .skill-item {
+            border: 1px solid var(--neon-pink);
+            padding: 20px;
+            text-align: center;
+            transition: 0.3s;
+            background: rgba(255, 0, 255, 0.02);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .skill-item:hover {
+            background: var(--neon-pink);
+            color: #000;
+            box-shadow: 0 0 30px var(--neon-pink);
+            transform: scale(1.05);
+        }
+
+        .skill-item img{
+            width: 100px;
+            height: 100px;
+        }
+
+        /* --- WORK SECTION --- */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .project-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 0 40px var(--neon-blue);
+        }
+
+        .project-card::before {
+            content: "ONLINE_//_PROJECT_ID: " attr(data-project-id);
+            position: absolute;
+            top: 10px; left: 10px;
+            font-size: 10px;
+            color: var(--terminal-green);
+        }
+
+        .project-image-container {
+            width: 100%;
+            height: 200px;
+            background-color: #1a1a2e; /* Placeholder dark */
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+        }
+
+        .project-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(50%) brightness(0.8);
+            transition: filter 0.3s ease;
+        }
+
+        .project-image-container:hover .project-image {
+            filter: grayscale(0%) brightness(1);
+        }
+
+        /* Glitch effect on hover for images */
+        .project-image.glitch {
+            animation: glitch-anim 0.5s infinite linear alternate;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip-path: inset(30% 0 70% 0); }
+            20% { clip-path: inset(50% 0 20% 0); }
+            40% { clip-path: inset(10% 0 80% 0); }
+            60% { clip-path: inset(70% 0 10% 0); }
+            80% { clip-path: inset(20% 0 60% 0); }
+            100% { clip-path: inset(40% 0 30% 0); }
+        }
+
+        /* --- CONTACT --- */
+        input, textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--neon-blue);
+            color: #fff;
+            padding: 15px 5px;
+            margin-bottom: 20px;
+            outline: none;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+        }
+        input:focus, textarea:focus {
+            border-bottom-color: var(--neon-pink);
+            box-shadow: 0 1px 0 0 var(--neon-pink);
+        }
+
+        button {
+            padding: 15px 40px;
+            background: transparent;
+            color: var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+            font-family: 'Orbitron';
+            width: 100%;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-blue);
+            transform: scale(1.02);
+        }
+
+        /* --- FUTURISTIC PROJECTS --- */
+
+        .futuristic-projects h3 {
+            font-family: 'Orbitron';
+            color: var(--neon-blue);
+            margin-bottom: 10px;
+        }
+
+        .project-tags {
+            margin-top: 15px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: var(--terminal-green);
+        }
+
+        /* Floating hologram motion */
+        .holo-float {
+            animation: holoDrift 6s ease-in-out infinite;
+        }
+
+        .holo-float.delay-1 { animation-delay: 1s; }
+        .holo-float.delay-2 { animation-delay: 2s; }
+
+        @keyframes holoDrift {
+            0% { transform: translateY(0px) rotateX(0deg); }
+            50% { transform: translateY(-12px) rotateX(3deg); }
+            100% { transform: translateY(0px) rotateX(0deg); }
+        }
+
+        /* Neon sweep on hover */
+        .project-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                120deg,
+                transparent 40%,
+                rgba(0,243,255,0.15),
+                transparent 60%
+            );
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .project-card:hover::after {
+            opacity: 1;
+        }
+
+        /* Image glitch trigger */
+        .project-card:hover .project-image {
+            animation: glitch-anim 0.4s infinite;
+        }
+
+
+        /* --- ANOMALIES / CURIOSITIES --- */
+
+        .anomaly-field {
+            position: relative;
+            height: 420px;
+            perspective: 1000px;
+        }
+
+        .anomaly-card {
+            position: absolute;
+            width: 280px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+            padding: 15px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 20px rgba(0,243,255,0.1);
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .anomaly-card img {
+            width: 100%;
+            margin-bottom: 10px;
+            filter: grayscale(70%) brightness(0.9);
+            transition: filter 0.3s;
+        }
+
+        .anomaly-card span {
+            font-size: 12px;
+            color: var(--terminal-green);
+            line-height: 1.4;
+        }
+
+        .anomaly-card:hover {
+            transform: translateZ(80px) scale(1.05);
+            box-shadow: 0 0 40px var(--neon-pink);
+        }
+
+        .anomaly-card:hover img {
+            filter: grayscale(0%) brightness(1.1);
+        }
+
+        /* Floating chaos */
+        .float-a { top: 0; left: 1%; animation: anomalyDrift 8s infinite ease-in-out; }
+        .float-b { top: 40px; right: 10%; animation: anomalyDrift 10s infinite ease-in-out reverse; }
+        .float-d { bottom: 40px; right: 35%; animation: anomalyDrift 11s infinite ease-in-out reverse; }
+
+        @keyframes anomalyDrift {
+            0%   { transform: translateY(0) rotateY(0deg); }
+            50%  { transform: translateY(-20px) rotateY(8deg); }
+            100% { transform: translateY(0) rotateY(0deg); }
+        }
+
+
+/* --- MOBILE STACKING FOR ANOMALIES --- */
+@media (max-width: 768px) {
+
+    .anomaly-field {
+        height: auto;
+        perspective: none;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .anomaly-card {
+        position: relative;
+        width: 100%;
+        max-width: 360px;
+        margin: 0 auto;
+        transform: none !important;
+        animation: none !important;
+    }
+
+    /* Kill floating positions */
+    .float-a,
+    .float-b,
+    .float-d {
+        top: auto;
+        bottom: auto;
+        left: auto;
+        right: auto;
+    }
+
+    .anomaly-card:hover {
+        transform: scale(1.02);
+    }
+}
+
+
+        /* --- SOCIAL HUD --- */
+
+        .social-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: var(--neon-blue);
+            transition: fill 0.3s ease;
+        }
+
+        .social-icon:hover svg {
+            fill: #000;
+        }
+
+        /* Brand glow accents */
+        .social-icon.linkedin:hover {
+            box-shadow: 0 0 30px #0a66c2;
+        }
+
+        .social-icon.github:hover {
+            box-shadow: 0 0 30px #ffffff;
+        }
+
+        .social-icon.whatsapp:hover {
+            box-shadow: 0 0 30px #00ff41;
+        }
+
+        .social-hud {
+            position: fixed;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 999;
+        }
+
+        .social-icon {
+            width: 46px;
+            height: 46px;
+            border: 1px solid var(--neon-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron';
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: var(--neon-blue);
+            text-decoration: none;
+            background: rgba(0,243,255,0.03);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 0 10px rgba(0,243,255,0.2);
+            transition: all 0.3s ease;
+            animation: socialFloat 6s ease-in-out infinite;
+        }
+
+        /* Staggered floating */
+        .social-icon:nth-child(1) { animation-delay: 0s; }
+        .social-icon:nth-child(2) { animation-delay: 1s; }
+        .social-icon:nth-child(3) { animation-delay: 2s; }
+
+        @keyframes socialFloat {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+            100% { transform: translateY(0); }
+        }
+
+        .social-icon:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 25px var(--neon-blue);
+            transform: scale(1.1);
+        }
+
+        /* Individual brand accents */
+        .social-icon.linkedin:hover { box-shadow: 0 0 30px #0a66c2; }
+        .social-icon.github:hover   { box-shadow: 0 0 30px #ffffff; }
+        .social-icon.whatsapp:hover { box-shadow: 0 0 30px #00ff41; }
+
+
+            /* Mobile safety */
+            @media (max-width: 768px) {
+                .social-hud {
+                    right: 10px;
+                }
+            }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            h1 { font-size: 12vw; }
+            h2 { font-size: 5vw; }
+            .about-content { flex-direction: column; text-align: center; }
+            .profile-hologram { margin-bottom: 30px; }
+            .glass-panel, .project-card { padding: 30px; }
+        }
+
+        @media (max-width: 480px) {
+            .glass-panel { padding: 20px; }
+            .project-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
-<div class="fondo_animado">
-
-<div class="seccion1" id="a1">
-  <div class="row1 ">
-    <img  src="img/yihad.jpeg">
-  </div>
-
-   <div class="row1" id="a2">
-     <h1 data-i18n="name"> YIHAD SALEK</h1>
-     <p data-i18n="intro"> Computer Geek, Disciple of Jesus Christ, love learning, sports and outdoor activities. </p>
-     <a href="#seccion5"><button data-i18n="talk" style="margin-top: 20px;"> Let's Talk! </button></a>
-   </div>
-</div>
-
-<div class="seccion2">
-  <img src="img/tree.jpg" id="tree"/>
-  <center><h1 data-i18n="myWork"> MY WORK</h1></center>
-      <div class="botones"> 
-      <button id="btn1" data-i18n="websites"> Websites </button>
-      <button id="btn2" data-i18n="projects"> Personal Projects </button>
-      </div>
-
-<div class="switch">
-      <div id="c_1">
-<div class="carousel"> 
-    <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/diegocowks.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://diegocowks.com/"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Diego Cowks<i class="material-icons right">close</i></span>
-      <p>He has filmed commercials for well-known brands worldwide, and his short films have been screened around the globe, where he has received accolades and awards as a director at international film festivals.</p>    </div>
-  </div></div>
-
-  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/bigibee.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://bigibee.com/"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Bigibee<i class="material-icons right">close</i></span>
-      <p>Bigibee is a place where parents and educators learn and teach emotions to their children and students, to reconnect with them, empower themselves in life, and help them be happier.</p>    </div>
-  </div></div>
-
-   <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/click.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="http://agenciademarketing.click/"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Marketing Click<i class="material-icons right">close</i></span>
-      <p>Full-service marketing agency specializing in digital planning and strategy.</p>    </div>
-  </div></div>
-
-  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/samaidreamc.jpg">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://samaidream.com/"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Samaidream<i class="material-icons right">close</i></span>
-      <p>This welcoming hostel is designed to help you connect with the four elements of nature. The decor of the four rooms is inspired by Air, Water, Fire, and Earth. </p>    </div>
-  </div></div>
-	
-  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/deporte.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://deportetotal.com.bo"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Deporte Total<i class="material-icons right">close</i></span>
-      <p>Sports news and media website.</p>    </div>
-  </div></div>
-	
-  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/monica.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://monicagarciaconsulting.com"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Monica Garcia Consulting<i class="material-icons right">close</i></span>
-      <p>To help insurers, third-party providers, workers, and employees achieve the best possible health and return-to-work outcomes.</p>    </div>
-  </div></div>
-	
-  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/sindy.jpg">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://sindyencinas.com"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Sindy Encinas<i class="material-icons right">close</i></span>
-      <p>Fashion and Image Consultant.</p>    </div>
-  </div></div>
-	
-	  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/moyarpi.jpg">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://moyarpi.com/"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Moyarpi<i class="material-icons right">close</i></span>
-      <p>The project you're looking for, in the location you want, at the price you're willing to invest</p>    </div>
-  </div></div>
-	
-	  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/icolor.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://icolorimprenta.com/"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Icolor Printing Press<i class="material-icons right">close</i></span>
-      <p>Sales and inventory system created for Icolor Printing.</p>    </div>
-  </div></div>
-	
-	  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/monrouc.jpg">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://www.monroucleaningservices.com/"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Monrou Cleaning Services<i class="material-icons right">close</i></span>
-      <p>Monrou Cleaning Services is responding to the current global pandemic by offering a cleaning solution for businesses and facilities.</p>    </div>
-  </div></div>
-
-  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/aero.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://mabaaero.com/"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Maba Aero<i class="material-icons right">close</i></span>
-      <p>MABA Aero is a key player in the value chain for Airbus and Boeing commercial aircraft platforms, supplying fuselage and engine components, as well as exchange, leasing, and repair solutions.</p>    </div>
-  </div></div>
-	
-	  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/victor.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://victorgarciacoach.com/"><button id="btn3">Ir al sitio WEB</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Victor García<i class="material-icons right">close</i></span>
-      <p>I help you create your Business Model and Marketing Strategy, I guide you in rediscovering the talent within you, and I challenge you to take action from day one.</p>    </div>
-  </div></div>
-
-   <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/erick.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="http://erickhurtado.click/"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Erick Hurtado<i class="material-icons right">close</i></span>
-      <p>Erick Hurtado Ballivián is a Bolivian with extensive experience in Marketing and Communication.</br> He holds a degree in Communication and Journalism from Universidad del Valle and specialized in Community Management and Social Media from Universidad Privada de Bolivia.</p>    </div>
-  </div></div>
-	
-	<div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/maldonado.jpg">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://maldonado.com.bo/"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Maldonado and Associates<i class="material-icons right">close</i></span>
-      <p>After 20 years of professional practice and with the intention of adapting to the changes and demands of the current context, we decided to change our name to: Maldonado Antezana y Asociados S.R.L.</p>    </div>
-  </div></div>
-
-	<div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/superhousec.jpg">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://superhousearq.com/"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Super House<i class="material-icons right">close</i></span>
-      <p>Every day we find inspiration in developing remodeling and facade renovation projects that reflect current trends.</p>    </div>
-  </div></div>
-	
-   <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/debbie.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://debbiecronenbold.com/"><button id="btn3">Go to website</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Debbie Cronenbold<i class="material-icons right">close</i></span>
-      <p>Debbie Cronenbold, educational psychologist, fashion designer, and Personal Image Coach, advising women during the most important moments of their lives, as well as training young entrepreneurs in their projects.</p>    </div>
-  </div></div>
-  </div>
-</div>
-
-    <div id="c_2">
-  <div class="carousel">
-     <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/calorias.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://yihads.github.io/Calculadora-de-calorias/"><button id="btn3">See more</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Calorie Calculator<i class="material-icons right">close</i></span>
-      <p>Calorie calculator developed primarily with CSS and JavaScript functions</p>
-    </div>
-  </div></div>
-
-  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/yogubo.jpg">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://yihads.github.io/yogubo.com/proyecto_final/index.html"><button id="btn3">See more</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Yogubo (College Project)<i class="material-icons right">close</i></span>
-      <p>This website for an ice cream shop for the university was created using Bootstrap. (Not responsive)</p>    </div>
-  </div></div>
-	  
-	    <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/puzzle_c.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://yihads.github.io/puzzle/"><button id="btn3">See more</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Puzzle<i class="material-icons right">close</i></span>
-      <p>Puzzle game made with Javascript.</p>    </div>
-  </div></div>
-
-  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/venta.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://yihadcarritodecompras.000webhostapp.com/"><button id="btn3">See more</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">PoS<i class="material-icons right">close</i></span>
-      <p>Simple sales control system, using PHP and an SQL database.</p>
-    </div>
-  </div></div>
-	  
-	  	    <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/rps_c.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://yihads.github.io/Rock-Paper-and-Scissors/"><button id="btn3">See more</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Rock, Paper & Scissors<i class="material-icons right">close</i></span>
-      <p>Rock, paper, scissors game.</p>
-    </div>
-  </div></div>
-	  
-	  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/shoestore.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://yihadcontrolinventario.000webhostapp.com/index.php"><button id="btn3">See more</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Shopping Cart<i class="material-icons right">close</i></span>
-      <p>Shopping cart for a sportswear store, built with PHP.</p>    </div>
-  </div></div>  
-
-    <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/adivinanzas.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://yihads.github.io/Adivinanzas/"><button id="btn3">See more</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Riddle Game<i class="material-icons right">close</i></span>
-      <p>Small minigame made with JavaScript and Sweet Alert 2.</p>    </div>
-  </div></div>
-
-  <div class="carousel-item"><div class="card">
-    <div class="card-image waves-effect waves-block waves-light">
-      <img class="activator" src="img/space.png">
-    </div>
-    <div class="card-content">
-      <span class="card-title activator"><i class="material-icons right">more_vert</i></span>
-      <p><a href="https://yihadsalekv.000webhostapp.com/"><button id="btn3">See more</button></a></p>
-    </div>
-    <div class="card-reveal">
-      <span class="card-title">Space Game<i class="material-icons right">close</i></span>
-      <p>Minigame using JavaScript and an SQL database.</p>    </div>
-  </div></div>
-  </div>
-</div>
-</div>
-</div>
-
-<div class="seccion3">
-  <center><h1 style="padding-bottom: 10px;" data-i18n="whatUse">WHAT I USE</h1></center>
-  <div class="row">
-    <div class="col">
-      <a href="https://developer.mozilla.org/es/docs/Web/HTML"><img src="img/html.svg"></a>
-      <a href="https://getbootstrap.com/"><img src="img/bootstrap-4.svg"></a>
-    </div>
-
-    <div class="col">
-      <a href="https://developer.mozilla.org/es/docs/Web/CSS"><img src="img/css.svg"></a>
-      <a href="https://www.php.net/docs.php"><img src="img/php.svg"></a>
-    </div>
-
-    <div class="col">
-      <a href="https://developer.mozilla.org/es/docs/Web/javascript"><img src="img/js.svg"></a>
-      <a href="https://docs.microsoft.com/en-us/sql/?view=sql-server-ver15"><img src="img/sql.svg"></a>
-    </div>
-
-    <div class="col">
-      <a href="https://wordpress.com/create/?aff=15767&cid=1654213&cmp_id=11549382845&adg_id=111353876614&kwd=wordpress&device=c"><img src="img/wordpress.svg"></a>
-      <a href="https://vuejs.org/"><img src="img/vue.svg"></a>
-    </div>
-
-    <div class="col">
-      <a href="https://learn.microsoft.com/en-us/dotnet/csharp/"><img src="img/c.svg"></a>
-      <a href="https://react.dev/"><img src="img/react.png"></a>
-    </div>
-  </div>
-</div>
-
-<div class="seccion4">
-  <center><h1 style="padding-top:10px" data-i18n="about"> ABOUT ME </h1></center>
-  <img src="img/arrow.png" id="arrow"/>
-  <div class="row4">
-     <div class="tv">
-      <div class="opacity">
-       <p data-i18n="aboutText">I'm a deep thinker, I love coding and solving problems. I love exercising and interacting with the nature, watching movies and trying new foods! </br></br> Fun fact: I served a full time mission in Salt Lake City :) </p>
-     </div>
-     </div>
-
-     <input type="checkbox" id="toggle" name="toggle" value="is_on" onclick="encender()">
-<label for="toggle" class="toy-toggle">
-  <span class="border1"></span>
-  <span class="border2"></span>
-  <span class="border3"></span>
-  <span class="handle">
-    <span class="handle-off"></span>
-    <span class="handle-on"></span>
-  </span>
-</label>
-  </div>
-
-<div class="row">
-  <div class="col"><a href="https://www.facebook.com/yihad.salek"><img src="img/facebook.svg"/><h1>FACEBOOK</h1></a></div>
-  <div class="col"><a href="https://github.com/yihad2020"><img src="img/github.svg"/><h1>GITHUB</h1></a></div>
-  <div class="col"><a href="https://www.linkedin.com/in/yihadsalek/"><img src="img/linkedin.svg"/><h1>LINKEDIN</h1></a></div>
-</div>
-</div>
-
-<div class="seccion5" id="seccion5">
-  <center><h1 style="padding-top:10px" data-i18n="contact"></h1>> CONTACT ME </h1></center>
-<form class="formulario" action="https://formsubmit.co/yihadsalekvillalba@gmail.com" method="POST">
-    <input type="text" id="fname" name="firstname" placeholder="Your awesome name..." data-i18n-placeholder="namePlaceholder" required>
-     <input type="hidden" name="_next" value="https://yihads.github.io/Portfolio/" >
-    <input type="text" id="mail" name="mail" placeholder="Your email..." data-i18n-placeholder="emailPlaceholder" required>
-    <textarea id="subject" name="subject" placeholder="Your Message..."  data-i18n="messagePlaceholder" required></textarea>
-     <div class="boton">
-    <input type="submit" id="enviar" value="SEND" data-i18n-value="send" >
-     </div>
-</form>
-
-
-</div>
-  <ul class="caja">
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
-    </ul>
-</div>
-<div id="whatsapp-widget" class="ww-right ww-normal ww-yes">  <a target="_blank" href="https://wa.me/+59169519741/?text=¡Hola! ¿Cómo estás?¿En qué puedo ayudarte?" class="ww-text">Hablemos<div class="ww-arrow"></div></a>  <div class="ww-icon">  <div>    <a class="ww-icon-link" target="_blank" href="https://wa.me/+59162005195/?text=¡Hola! ¿Cómo estás?¿En qué puedo ayudarte?">      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">        <path d=" M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 0 1-.315-.1c-.802-.402-1.504-.817-2.163-1.447-.545-.516-1.146-1.29-1.46-1.963a.426.426 0 0 1-.073-.215c0-.33.99-.945.99-1.49 0-.143-.73-2.09-.832-2.335-.143-.372-.214-.487-.6-.487-.187 0-.36-.043-.53-.043-.302 0-.53.115-.746.315-.688.645-1.032 1.318-1.06 2.264v.114c-.015.99.472 1.977 1.017 2.78 1.23 1.82 2.506 3.41 4.554 4.34.616.287 2.035.888 2.722.888.817 0 2.15-.515 2.478-1.318.13-.33.244-.73.244-1.088 0-.058 0-.144-.03-.215-.1-.172-2.434-1.39-2.678-1.39zm-2.908 7.593c-1.747 0-3.48-.53-4.942-1.49L7.793 24.41l1.132-3.337a8.955 8.955 0 0 1-1.72-5.272c0-4.955 4.04-8.995 8.997-8.995S25.2 10.845 25.2 15.8c0 4.958-4.04 8.998-8.998 8.998zm0-19.798c-5.96 0-10.8 4.842-10.8 10.8 0 1.964.53 3.898 1.546 5.574L5 27.176l5.974-1.92a10.807 10.807 0 0 0 16.03-9.455c0-5.958-4.842-10.8-10.802-10.8z" fill-rule="evenodd"></path>      </svg>    </a>    </div>    <div>    <a class="ww-link" rel="nofollow" type="link" href="https://timelines.ai">Timelines.ai</a>    </div>  </div></div><style>  #whatsapp-widget {    position: fixed;    bottom: 20px;    height: max-content;    display: flex;    align-items: center;    gap: 20px;    z-index: 99999999;    visibility: hidden;    transition: all 2s ease 0s;  }  #whatsapp-widget.ww-yes {    visibility: visible;  }  #whatsapp-widget.ww-no {    visibility: hidden !important;  }  #whatsapp-widget .ww-icon {    display: flex;    flex-direction: column;    justify-content: center;    align-items: center;    gap: 5px;    opacity: 0;    animation: grow 3s;    animation-delay: 1s;    animation-fill-mode: forwards;  }  #whatsapp-widget .ww-link {    opacity: 1;    display: block;    bottom: -15px;    text-align: center;    white-space: nowrap;    text-decoration: none;    width: 60px;    font-family: Roboto, "Helvetica Neue", sans-serif;    font-size: 11px;    line-height: 11px;    border: 0px;    max-width: inherit;    color: rgb(175, 175, 175) !important;  }  #whatsapp-widget .ww-link:hover {    border: 0px;    text-decoration: underline !important;    color: rgb(175, 175, 175) !important;  }  #whatsapp-widget .ww-text {    border-radius: 8px;    border: 1px solid #e2e2e2;    cursor: pointer;    word-break: break-word;    background: white;    padding: 1rem;    position: relative;    box-shadow: 2px 2px 15px 2px rgb(0 0 0 / 17%);    opacity: 0;    animation: slide 1s;    animation-delay: 3s;    animation-fill-mode: forwards;    margin-bottom: 15px;    z-index: 100;  }  #whatsapp-widget .ww-arrow {    position: absolute;    background: white;    border-right: 0.5px solid #e2e2e2;    border-bottom: 0.5px solid #e2e2e2;    top: 50%;    width: 20px;    height: 20px;    z-index: -100;  }  #whatsapp-widget.ww-right .ww-arrow {    transform: translateY(-50%) rotate(-45deg);    right: -11px;    left: unset;  }  #whatsapp-widget.ww-left .ww-arrow {    left: -11px;    right: unset;    transform: translateY(-50%) rotate(135deg);  }  #whatsapp-widget.ww-big .ww-text {    font-size: 23px;    line-height: 25px;  }  #whatsapp-widget.ww-medium .ww-text {    font-size: 20px;    line-height: 22px;    padding: 15px;  }  #whatsapp-widget.ww-normal .ww-text {    font-size: 17px;    padding: 12px;    line-height: 19px;  }  #whatsapp-widget svg {    fill: rgb(255, 255, 255);    z-index: 1;    border-radius: 50px;    cursor: pointer;    transition: transform 0.7s ease-in-out;    width: 100%;    height: 100%;    stroke: none;  }  #whatsapp-widget svg:hover {    transform: rotate(720deg);  }  #whatsapp-widget.ww-right .ww-text::after {    right: -10px;    transform: translateY(-50%) rotate(-45deg);  }  #whatsapp-widget.ww-left .ww-text::after {    left: -10px;    transform: translateY(-50%) rotate(135deg);  }  #whatsapp-widget.ww-left {    left: 20px;    flex-direction: row-reverse;  }  #whatsapp-widget.ww-right {    right: 20px;    flex-direction: row;  }  #whatsapp-widget .ww-icon-link {    padding: 5px;    box-sizing: border-box;    border-radius: 50%;    cursor: pointer;    overflow: hidden;    box-shadow: rgb(0 0 0 / 40%) 2px 2px 6px;    transition: all 0.5s ease 0s;    position: relative;    z-index: 200;    display: block;    border: 0px;    background: rgb(77, 194, 71) !important;  }  #whatsapp-widget.ww-normal .ww-icon-link {    width: 50px;    height: 50px;  }  #whatsapp-widget.ww-medium .ww-icon-link {    height: 65px;    width: 65px;  }  #whatsapp-widget.ww-big .ww-icon-link {    height: 75px;    width: 75px;  }  #whatsapp-widget .ww-icon div {    display: flex;    align-items: center;    justify-content: center;  }  @media (max-width: 768px) {    #whatsapp-widget {      bottom: 5px;    }    #whatsapp-widget .ww-text {      display: none;    }    #whatsapp-widget.ww-right {      right: 5px;      left: unset;    }    #whatsapp-widget.ww-left {      left: 5px;      right: unset;    }  }  @keyframes slide {    from {      bottom: -20px;      opacity: 0;    }    to {      bottom: 0px;      opacity: 1;    }    0% {      opacity: 0;    }    100% {      opacity: 1;    }  }  @keyframes grow {    0% {      -webkit-transform: scale(0);      -moz-transform: scale(0);      -o-transform: scale(0);      -ms-transform: scale(0);      transform: scale(0);    }    50% {      -webkit-transform: scale(1.2);      -moz-transform: scale(1.2);      -o-transform: scale(1.2);      -ms-transform: scale(1.2);      transform: scale(1.2);    }    100% {      -webkit-transform: scale(1);      -moz-transform: scale(1);      -o-transform: scale(1);      -ms-transform: scale(1);      transform: scale(1);      opacity: 1;    }  }</style>0
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.5.1.js"  integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js" integrity="sha512-NiWqa2rceHnN3Z5j6mSAvbwwg3tiwVNxiAQaaSMSXnRRDh5C2mk/+sKQRw8qjV1vN4nf8iK2a0b048PnHbyx+Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="function.js"></script>
-    <script>
-    $(document).ready(function(){
-    $('.carousel').carousel();
-  });
-    </script>
+    <div class="scanline"></div>
+    <div class="hud-corner top-left"></div>
+    <div class="hud-corner bottom-right"></div>
     
+    <canvas id="scene"></canvas>
+
+    <section>
+        <div class="hero-title">
+            <div class="status-bar">SYSTEM_READY // USER_AUTH_OK</div>
+            <h1>YIHAD SALEK</h1>
+            <p style="letter-spacing: 5px; opacity: 0.7;">DIMENSION BREAKER & WEB ARCHITECT</p>
+        </div>
+    </section>
+
+    <section id="about">
+        <div class="glass-panel" data-id="0092-A">
+            <h2>[ 01 ] GET TO KNOW ME</h2>
+            <div class="about-content">
+                <div class="profile-hologram">
+                    <img src="img/yihad.jpg" alt="Void Architect Profile">
+                </div>
+                <div>
+                    <p>I specialize in building interfaces that bridge the gap between human intuition and machine logic. My work draws inspiration from cyberpunk dystopias and the cold beauty of deep space.</p>
+                    <p style="margin-top: 15px;">Every line of code is a mission-critical operation, focused on creating high-performance, visually immersive web applications. From front-end react components to robust back-end systems, I engineer digital realities.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <section id="projects">
+    <div class="glass-panel" data-id="0110-X">
+        <h2>[ 02 ] FEATURED_MISSIONS</h2>
+        <p style="opacity:0.7; margin-bottom:30px;">
+            Highlighted operations executed across multiple dimensions. Hover to decrypt.
+        </p>
+
+        <div class="project-grid futuristic-projects">
+
+            <!-- PROJECT 01 -->
+            <div class="project-card holo-float" data-project-id="VX-7821">
+                <div class="project-image-container">
+                    <img class="project-image" src="img/aero.png" />
+                </div>
+                <h3>MABA Aero</h3>
+                <p>MABA Aero is a key player in the value chain for Airbus and Boeing commercial aircraft platforms, supplying fuselage and engine components, as well as exchange, leasing, and repair solutions.</p>
+                <div class="project-tags">WEBSITE</div>
+            </div>
+
+            <!-- PROJECT 02 -->
+            <div class="project-card holo-float delay-1" data-project-id="CR-1099">
+                <div class="project-image-container">
+                    <img class="project-image" src="img/monica.png" />
+                </div>
+                <h3>Monica Garcia</h3>
+                <p>To help insurers, third-party providers, workers, and employees achieve the best possible health and return-to-work outcomes.</p>
+                <div class="project-tags">WEBSITE</div>
+            </div>
+
+            <!-- PROJECT 03 -->
+            <div class="project-card holo-float delay-2" data-project-id="ST-4430">
+                <div class="project-image-container">
+                    <img class="project-image" src="img/erick.png" />
+                </div>
+                <h3>Erick Hurtado</h3>
+                <p>Erick Hurtado Ballivián is a Bolivian with extensive experience in Marketing and Communication.</p>
+                <div class="project-tags">WEBSITE</div>
+            </div>
+
+            <div class="project-card holo-float" data-project-id="VX-7821">
+                <div class="project-image-container">
+                    <img class="project-image" src="img/space.png" />
+                </div>
+                <h3>Space Invaders</h3>
+                <p>Minigame using JavaScript and an SQL database.</p>
+                <div class="project-tags">VIDEOGAME</div>
+            </div>
+
+            <div class="project-card holo-float" data-project-id="VX-7821">
+                <div class="project-image-container">
+                    <img class="project-image" src="img/puzzle.png" />
+                </div>
+                <h3>Puzzle</h3>
+                <p>Puzzle game made with Javascript.</p>
+                <div class="project-tags">COLLEGE PROJECT</div>
+            </div>
+
+            <div class="project-card holo-float delay-1" data-project-id="CR-1099">
+                <div class="project-image-container">
+                    <img class="project-image" src="img/rps.png" />
+                </div>
+                <h3>Rock, Paper & Scissors</h3>
+                <p>The OG rock, paper and scissors game.</p>
+                <div class="project-tags">VIDEOGAME</div>
+            </div>
+
+            <div class="project-card holo-float delay-1" data-project-id="CR-1099">
+                <div class="project-image-container">
+                    <img class="project-image" src="img/maldonado.jpg" />
+                </div>
+                <h3>Maldonando & Associates</h3>
+                <p>After 20 years of professional practice and with the intention of adapting to the changes and demands of the current context, we decided to change our name to: Maldonado Antezana y Asociados S.R.L.</p>
+                <div class="project-tags">WEBSITE</div>
+            </div>
+
+            <div class="project-card holo-float" data-project-id="ST-4430">
+                <div class="project-image-container">
+                    <img class="project-image" src="img/victor.png" />
+                </div>
+                <h3>Victor Garcia</h3>
+                <p>I help you create your Business Model and Marketing Strategy, I guide you in rediscovering the talent within you, and I challenge you to take action from day one.</p>
+                <div class="project-tags">WEBSITE</div>
+            </div>
+
+        </div>
+    </div>
+    </section>
+
+
+    <section>
+        <div style="width: 800px;">
+            <h2 style="margin-bottom: 30px; border-bottom: 1px solid #333;">[ 03 ] MY STACK</h2>
+            <div class="skills-grid">
+                <div class="skill-item"><img src="img/javascript.png" />JAVASCRIPT</div>
+                <div class="skill-item"><img src="img/react.png" />REACT JS</div>
+                <div class="skill-item"><img src="img/jquery.png" />JQuery</div>
+                <div class="skill-item"><img src="img/vue.png" />VUE JS</div>
+                <div class="skill-item"><img src="img/mysql.png" />MySQL</div>
+                <div class="skill-item"><img src="img/php.png" />PHP</div>
+                <div class="skill-item"><img src="img/laravel.png" />LARAVEL</div>
+                <div class="skill-item"><img src="img/c.png" />C#</div>
+                <div class="skill-item"><img src="img/python.png" />PYTHON</div>
+                <div class="skill-item"><img src="img/wordpress.png" />WORDPRESS</div>
+            </div>
+        </div>
+    </section>
+
+
+    <section id="anomalies">
+        <div class="glass-panel" data-id="0149-Z">
+            <h2>[ 04 ] ANOMALIES_&_SIDEQUESTS</h2>
+            <p style="opacity:0.65; margin-bottom:40px;">
+                Non-essential data fragments recovered from neural drift.  
+                Interests, curiosities, and side quests that keep the system unstable.
+            </p>
+
+            <div class="anomaly-field">
+
+                <div class="anomaly-card float-a">
+                    <img src="img/me1.jpeg" />
+                    <span>Always been a computer nerd but I enjoy being active, grew up playing different sports.</span>
+                </div>
+
+                <div class="anomaly-card float-b">
+                    <img src="img/me2.jpeg" />
+                    <span>I love the mountains, they bring me a lot of peace. Fun fact: I hiked Mount Olympus just for fun, and I survived.</span>
+                </div>
+
+                <div class="anomaly-card float-d">
+                    <img src="img/me4.jpeg" />
+                    <span>I'm a foodie, I go crazy everytime I have to try new foods/restaurants.</span>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+    <section>
+        <div class="glass-panel" style="width: 500px;">
+            <h2 style="color: var(--neon-pink)">[ 05 ] SEND_SIGNAL</h2>
+            <form
+            id="contactForm"
+            action="https://formsubmit.co/yihadsalekvillalba@gmail.com"
+            method="POST"
+            style="margin-top: 30px;"
+            >
+                <input type="text" name="name" placeholder="YOUR NAME" required>
+                <input type="email" name="email" placeholder="YOUR EMAIL" required>
+                <textarea name="message" placeholder="YOUR MESSAGE" required></textarea>
+
+                <!-- FormSubmit config -->
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_subject" value="New Portfolio Handshake 🚀">
+                <input type="hidden" name="_template" value="table">
+
+                <button type="submit">INITIATE_HANDSHAKE</button>
+            </form>
+
+        </div>
+    </section>
+
+    <script>
+        // --- THREE.JS BACKGROUND ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector('#scene'), antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // Create Floating Geometry
+        const shapes = [];
+        const geometry = new THREE.IcosahedronGeometry(1, 1);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.2 });
+
+        for(let i=0; i<20; i++) {
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(Math.random()*20-10, Math.random()*20-10, Math.random()*20-10);
+            mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0);
+            scene.add(mesh);
+            shapes.push(mesh);
+        }
+
+        // Starfield Particles
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 3000;
+        const posArray = new Float32Array(starCount * 3);
+        for(let i=0; i < starCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 50;
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const starMat = new THREE.PointsMaterial({ size: 0.02, color: 0xffffff });
+        const starMesh = new THREE.Points(starGeo, starMat);
+        scene.add(starMesh);
+
+        camera.position.z = 5;
+
+        // Mouse Tracking for Parallax
+        let mouseX = 0, mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX - window.innerWidth / 2) / 100;
+            mouseY = (e.clientY - window.innerHeight / 2) / 100;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            shapes.forEach(shape => {
+                shape.rotation.x += 0.005;
+                shape.rotation.y += 0.005;
+            });
+
+            starMesh.rotation.y += 0.001;
+            
+            // Subtle camera lag follow
+            camera.position.x += (mouseX - camera.position.x) * 0.05;
+            camera.position.y += (-mouseY - camera.position.y) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+
+
+        // Floating HUD labels for projects
+        for (let i = 0; i < 8; i++) {
+            const el = document.createElement('div');
+            el.className = 'floating-data';
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.top = Math.random() * 100 + 'vh';
+            el.style.setProperty('--duration', (10 + Math.random() * 10) + 's');
+            el.textContent = 'PROJECT::' + Math.random().toString(36).substr(2, 4).toUpperCase();
+            document.body.appendChild(el);
+        }
+
+        // Anomaly section floating fragments
+const anomalySection = document.querySelector('#anomalies');
+
+for (let i = 0; i < 6; i++) {
+    const frag = document.createElement('div');
+    frag.className = 'floating-data';
+    frag.style.left = Math.random() * 100 + '%';
+    frag.style.top = Math.random() * 100 + '%';
+    frag.style.setProperty('--duration', (6 + Math.random() * 6) + 's');
+    frag.textContent = 'MEM_' + Math.random().toString(36).substr(2, 5).toUpperCase();
+    anomalySection.appendChild(frag);
+}
+
+    </script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+const form = document.getElementById("contactForm");
 
-  const langBtn = document.getElementById("lang-switch");
-  if (!langBtn) return;
+form.addEventListener("submit", async function (e) {
+    e.preventDefault();
 
-  const translations = {
-    en: {
-      name: "YIHAD SALEK",
-      intro: "Computer Geek, Disciple of Jesus Christ, love learning, sports and outdoor activities.",
-      talk: "Let's Talk!",
-      myWork: "MY WORK",
-      websites: "Websites",
-      projects: "Personal Projects",
-      goSite: "Go to website",
-      seeMore: "See more",
-      whatUse: "WHAT I USE",
-      about: "ABOUT ME",
-      aboutText: "I'm a deep thinker, I love coding and solving problems. I love exercising and interacting with nature, watching movies and trying new foods! Fun fact: I served a full time mission in Salt Lake City :)",
-      contact: "CONTACT ME",
-      namePlaceholder: "Your awesome name...",
-      emailPlaceholder: "Your email...",
-      messagePlaceholder: "Your Message...",
-      send: "SEND"
-    },
-    es: {
-      name: "YIHAD SALEK",
-      intro: "Apasionado por la tecnología, discípulo de Jesucristo, amante del aprendizaje, los deportes y las actividades al aire libre.",
-      talk: "¡Hablemos!",
-      myWork: "MI TRABAJO",
-      websites: "Sitios Web",
-      projects: "Proyectos Personales",
-      goSite: "Ir al sitio web",
-      seeMore: "Ver más",
-      whatUse: "TECNOLOGÍAS QUE USO",
-      about: "SOBRE MÍ",
-      aboutText: "Soy una persona reflexiva, me encanta programar y resolver problemas. Disfruto hacer ejercicio, estar en contacto con la naturaleza, ver películas y probar comidas nuevas. Dato curioso: serví una misión de tiempo completo en Salt Lake City :)",
-      contact: "CONTÁCTAME",
-      namePlaceholder: "Tu nombre...",
-      emailPlaceholder: "Tu correo...",
-      messagePlaceholder: "Tu mensaje...",
-      send: "ENVIAR"
+    const formData = new FormData(form);
+
+    try {
+        await fetch("https://formsubmit.co/yihadsalekvillalba@gmail.com", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+
+        await Swal.fire({
+            title: "Handshake Completed 🤝",
+            text: "Your message has been successfully transmitted.",
+            icon: "success",
+            confirmButtonText: "Return to Terminal",
+            background: "#0a0a0a",
+            color: "#00fff7",
+            confirmButtonColor: "#00fff7"
+        });
+
+        location.reload();
+
+    } catch (error) {
+        Swal.fire({
+            title: "Transmission Failed ❌",
+            text: "Something went wrong. Try again later.",
+            icon: "error",
+            background: "#0a0a0a",
+            color: "#ff3860",
+            confirmButtonColor: "#ff3860"
+        });
     }
-  };
-
-  let currentLang = "en";
-
-  function applyLanguage(lang) {
-    document.querySelectorAll("[data-i18n]").forEach(el => {
-      const key = el.dataset.i18n;
-      if (translations[lang][key]) {
-        el.innerText = translations[lang][key];
-      }
-    });
-
-    document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
-      const key = el.dataset.i18nPlaceholder;
-      el.placeholder = translations[lang][key];
-    });
-
-    document.querySelectorAll("[data-i18n-value]").forEach(el => {
-      const key = el.dataset.i18nValue;
-      el.value = translations[lang][key];
-    });
-  }
-
-  langBtn.addEventListener("click", () => {
-    currentLang = currentLang === "en" ? "es" : "en";
-    langBtn.innerText = currentLang === "en" ? "ES" : "EN";
-    applyLanguage(currentLang);
-  });
-
-  applyLanguage(currentLang);
 });
 </script>
 
-<button id="lang-switch" class="lang-btn">ES</button>
+
+    <!-- SOCIAL HUD -->
+    <div class="social-hud">
+        <!-- LINKEDIN -->
+        <a href="https://www.linkedin.com/in/yihadsalek" target="_blank" class="social-icon linkedin" aria-label="LinkedIn">
+            <svg viewBox="0 0 24 24">
+                <path d="M4.98 3.5C4.98 4.88 3.86 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8h4V24h-4V8zm7.5 0h3.8v2.2h.05c.53-1 1.82-2.2 3.75-2.2 4 0 4.75 2.6 4.75 6V24h-4v-8.5c0-2-.04-4.5-2.75-4.5s-3.18 2.15-3.18 4.35V24h-4V8z"/>
+            </svg>
+        </a>
+
+        <!-- GITHUB -->
+        <a href="https://github.com/yihad2020" target="_blank" class="social-icon github" aria-label="GitHub">
+            <svg viewBox="0 0 24 24">
+                <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.25.8-.55v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.2-1.2-1.55-1.2-1.55-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 .1.8-2.2 2.9-3.1-.9-.1-1.9-.45-1.9-2 0-.5.2-1 .5-1.4-.1-.1-.2-.7.1-1.4 0 0 .4-.1 1.4.5.4-.1.9-.15 1.4-.15s1 .05 1.4.15c1-.6 1.4-.5 1.4-.5.3.7.2 1.3.1 1.4.3.4.5.9.5 1.4 0 1.6-1 1.9-2 2 .8.7 1.5 2 1.5 4v3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.65 18.35.5 12 .5z"/>
+            </svg>
+        </a>
+
+        <!-- WHATSAPP -->
+        <a href="https://wa.me/59169519741" target="_blank" class="social-icon whatsapp" aria-label="WhatsApp">
+            <svg viewBox="0 0 24 24">
+                <path d="M20.52 3.48A11.82 11.82 0 0012 .5C5.65.5.5 5.65.5 12c0 2.1.55 4.15 1.6 5.95L.5 23.5l5.7-1.5A11.9 11.9 0 0012 23.5c6.35 0 11.5-5.15 11.5-11.5 0-3.07-1.2-5.95-3.48-8.52zm-8.52 18a9.9 9.9 0 01-5.05-1.4l-.35-.2-3.4.9.9-3.3-.2-.35A9.85 9.85 0 0112 2.5a9.98 9.98 0 010 19zm5.45-7.4c-.3-.15-1.8-.9-2.1-1-.3-.1-.5-.15-.7.15-.2.3-.8 1-.95 1.2-.15.2-.3.25-.6.1-.3-.15-1.25-.45-2.4-1.45-.9-.8-1.5-1.8-1.7-2.1-.15-.3-.02-.45.13-.6.13-.13.3-.35.45-.5.15-.15.2-.25.3-.4.1-.15.05-.3-.02-.45-.07-.15-.7-1.7-.95-2.35-.25-.6-.5-.5-.7-.5h-.6c-.2 0-.45.05-.7.3-.25.25-.9.9-.9 2.2s.95 2.55 1.1 2.7c.15.15 1.9 3 4.6 4.2.65.3 1.15.5 1.55.65.65.2 1.25.17 1.7.1.5-.07 1.8-.75 2.05-1.45.25-.7.25-1.3.18-1.45-.07-.15-.27-.25-.57-.4z"/>
+            </svg>
+        </a>
+    </div>
 </body>
 </html>
