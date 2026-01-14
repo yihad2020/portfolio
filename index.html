@@ -446,7 +446,14 @@
 /* --- MOBILE STACKING FOR ANOMALIES --- */
 @media (max-width: 768px) {
 
-    html, body, * {overflow-x: hidden;}
+    html, body {
+      overflow-x: hidden;
+    }
+
+* {
+      box-sizing: border-box;
+    }
+
     .anomaly-field {
         height: auto;
         perspective: none;
@@ -941,5 +948,6 @@ form.addEventListener("submit", async function (e) {
     </div>
 </body>
 </html>
+
 
 
