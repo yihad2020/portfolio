@@ -444,6 +444,16 @@
 
 
 /* --- MOBILE STACKING FOR ANOMALIES --- */
+
+@media (max-width: 768px), (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+        
 @media (max-width: 768px) {
 
     html, body {
@@ -971,6 +981,7 @@ form.addEventListener("submit", async function (e) {
     </div>
 </body>
 </html>
+
 
 
 
