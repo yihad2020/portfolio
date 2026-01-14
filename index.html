@@ -452,7 +452,12 @@
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
-  }}
+  }
+.no-motion * {
+  animation: none !important;
+  transition: none !important;
+}
+}
         
 @media (max-width: 768px) {
 
@@ -817,6 +822,9 @@
     </section>
 
     <script>
+        if (window.innerWidth <= 768) {
+  document.documentElement.classList.add('no-motion');
+}
         // --- THREE.JS BACKGROUND ---
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -981,6 +989,7 @@ form.addEventListener("submit", async function (e) {
     </div>
 </body>
 </html>
+
 
 
 
