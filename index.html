@@ -460,6 +460,13 @@
             100% { transform: translateY(0); }
         }
 
+            @keyframes anomalyDrift {
+            0%   { transform: translateY(0) rotateY(0deg); }
+            50%  { transform: translateY(0) rotateY(0deg); }
+            100% { transform: translateY(0) rotateY(0deg); }
+        }
+
+    
     .anomaly-field {
         height: auto;
         perspective: none;
@@ -964,6 +971,7 @@ form.addEventListener("submit", async function (e) {
     </div>
 </body>
 </html>
+
 
 
 
