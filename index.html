@@ -18,7 +18,7 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
         
-        html, body{overflow-x: hidden;}
+        
         
         body {
             background: var(--deep-space);
@@ -446,6 +446,7 @@
 /* --- MOBILE STACKING FOR ANOMALIES --- */
 @media (max-width: 768px) {
 
+    html, body, * {overflow-x: hidden;}
     .anomaly-field {
         height: auto;
         perspective: none;
@@ -940,4 +941,5 @@ form.addEventListener("submit", async function (e) {
     </div>
 </body>
 </html>
+
 
